@@ -238,15 +238,16 @@ class QuantizationAwareTraining(Callback):
         model.forward = wrap_qat_forward_context(  # type: ignore [assignment]
             quant_cb=self, model=model, func=model.forward, trigger_condition=self._collect_quantization
         )
-
+        
         # attach a global qconfig, which contains information about what kind
         # of observers to attach. Use 'fbgemm' for server inference
+        version = 0 if _TORCH_GREATER_EQUAL_1_12 else None
         if isinstance(self._qconfig, str):
             if self._observer_type == "histogram":
-                model.qconfig = torch.quantization.get_default_qconfig(self._qconfig)
+                model.qconfig = torch.quantization.get_default_qconfig(self._qconfig, version=version)
             elif self._observer_type == "average":
                 model.qconfig = torch.quantization.get_default_qat_qconfig(
-                    self._qconfig, version=0 if _TORCH_GREATER_EQUAL_1_12 else None
+                    self._qconfig, version=version
                 )
 
         elif isinstance(self._qconfig, QConfig):
